@@ -9,8 +9,10 @@ int main(int argc, char *argv[])
     try
     {
     Data * data = new Data;
-    parse(data, "bbsse.kiss2");
+    QString beginState = parse(data, "s27.kiss2");
 
+    Show(data);
+    DeleteDC(data, beginState);
     Show(data);
 
     QVector<int> Ri;

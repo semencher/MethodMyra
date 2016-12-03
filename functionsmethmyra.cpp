@@ -1,8 +1,10 @@
 #include "functionsmethmyra.h"
 
+QString beginState = "";
+
 void parsePrivate(Data * data, const QString nameFile);
 
-void parse(Data * data, const QString & nameFile)
+QString parse(Data * data, const QString & nameFile)
 {
     std::ifstream file;
     std::string nameFileStd = nameFile.toStdString();
@@ -124,6 +126,8 @@ void parse(Data * data, const QString & nameFile)
     QString iState = "";
     QString oState = "";
 
+    QString beginState = "";
+
     for (int i = 0; i < pcount; i++)
     {
         for (int j = 0; j < icount; j++)
@@ -159,6 +163,10 @@ void parse(Data * data, const QString & nameFile)
                 throw e;
             }
             sym = file.get();
+        }
+        if (beginState == "")
+        {
+            beginState = iState;
         }
 
         while(sym == ' ')
@@ -257,6 +265,7 @@ void parse(Data * data, const QString & nameFile)
     }
     file.close();
     parsePrivate(data, nameFile);
+    return beginState;
 }
 
 void parsePrivate(Data * data, const QString nameFile)
@@ -285,7 +294,10 @@ void parsePrivate(Data * data, const QString nameFile)
     int pcount = 0;
 
     char sym;
-    sym = file.get();
+    while(sym != '.')
+    {
+        sym = file.get();
+    }
 
     while (sym == '.')
     {
@@ -582,4 +594,65 @@ bool compareForRi(Data * data, int i, int j, QVector<int> Ri)
         }
     }
     return true;
+}
+
+void DeleteDC(Data * data, const QString & beginState)
+{
+    Data * newData = new Data;
+
+    QVector<QString> reachState;
+    reachState.push_back(beginState);
+
+    int sizeInput = data->inputs.size();
+
+    int oldSize = 0;
+    while(reachState.size() != oldSize)
+    {
+        oldSize = reachState.size();
+        for (int i = 0; i < oldSize; i++)
+        {
+            int index = data->states.indexOf(reachState[i]);
+            for (int j = 0; j < sizeInput; j++)
+            {
+                if (data->table[j][index].state != "" && !reachState.contains(data->table[j][index].state))
+                {
+                    reachState.push_back(data->table[j][index].state);
+                }
+            }
+        }
+    }
+
+    int size = data->states.size();
+    for (int i = 0; i < size; i++)
+    {
+        if (reachState.contains(data->states[i]))
+        {
+            newData->states.push_back(data->states[i]);
+        }
+    }
+    newData->table = new Element *[sizeInput];
+    int newSize = newData->states.size();
+    for (int i = 0; i < sizeInput; i++)
+    {
+        newData->table[i] = new Element[newSize];
+    }
+    for (int i = 0; i < sizeInput; i++)
+    {
+        int k = 0;
+        for (int j = 0; j < size; j++)
+        {
+            if (newData->states.contains(data->states[j]))
+            {
+                newData->table[i][k] = data->table[i][j];
+                k++;
+            }
+        }
+    }
+    for (int i = 0; i < sizeInput; i++)
+    {
+        delete []data->table[i];
+    }
+    delete []data->table;
+    data->states = newData->states;
+    data->table = newData->table;
 }

@@ -43,7 +43,7 @@ struct Data
     QVector<QString> inputs;
 };
 
-void parse(Data * data, const QString & nameFile);
+QString parse(Data * data, const QString & nameFile);
 
 QVector<int> GetArrDC(const QString & interval);
 
@@ -58,5 +58,9 @@ bool compareForR1(Data * data, int i, int j);
 QVector<int> GetRi(QVector<int> & Ri, Data * data);
 
 bool compareForRi(Data * data, int i, int j, QVector<int> Ri);
+
+void DeleteDC(Data * data, const QString & beginState);
+
+void out(Data * data);
 
 #endif  // FUNCTIONSMETHMYRA_H
