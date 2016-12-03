@@ -23,11 +23,14 @@ void parse(Data * data, const QString & nameFile)
     e.SetMessage("Error of data!");
 
     char sym;
-    if (file.eof())
+    while(sym != '.')
     {
-        throw e;
+        if (file.eof())
+        {
+            throw e;
+        }
+        sym = file.get();
     }
-    sym = file.get();
 
     while (sym == '.')
     {
@@ -447,4 +450,136 @@ bool NextVector(QString & vector, QVector<int> arr)
         }
         return false;
     }
+}
+
+void Show(Data * data)
+{
+    for (int i = 0; i < data->states.size(); i++)
+    {
+        std::cout << data->states[i].toStdString() << " ";
+    }
+    std::cout << "\n\n";
+    for (int i = 0; i < data->inputs.size(); i++)
+    {
+        std::cout << data->inputs[i].toStdString() << " ";
+        for (int j = 0; j < data->states.size(); j++)
+        {
+            std::cout << data->table[i][j].state.toStdString() << "/";
+            std::cout << data->table[i][j].output.toStdString() << " ";
+        }
+        std::cout << "\n\n";
+    }
+}
+
+void GetR1(QVector<int> & R1, Data * data)
+{
+    int size = data->states.size();
+    for (int i = 0; i < size; i++)
+    {
+        R1.push_back(1);
+    }
+
+    int index = 1;
+
+    for (int i = 1; i < size; i++)
+    {
+        for (int j = i - 1; j >= 0; j--)
+        {
+            if (compareForR1(data, i, j))
+            {
+                R1[i] = R1[j];
+                break;
+            }
+            else
+            {
+                if (j == 0)
+                {
+                    index++;
+                    R1[i] = index;
+                }
+            }
+        }
+    }
+}
+
+bool compareForR1(Data * data, int i, int j)
+{
+    int size = data->inputs.size();
+    for (int k = 0; k < size; k++)
+    {
+        if (data->table[k][i].output != "" && data->table[k][j].output != "")
+        {
+            if (data->table[k][i].output != data->table[k][j].output)
+                return false;
+        }
+    }
+    return true;
+}
+
+QVector<int> GetRi(QVector<int> & Ri, Data * data)
+{
+    QVector<int> newRi;
+    int size = data->states.size();
+    for (int i = 0; i < size; i++)
+    {
+        newRi.push_back(0);
+    }
+    int index = 0;
+    for (int i = 0; i < size; i++)
+    {
+        if (Ri[i] > index)
+            index = Ri[i];
+    }
+    int newIndex = index;
+
+    bool firstInput = true;
+    for (int i = 1; i <= index; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (Ri[j] == i)
+            {
+                if (firstInput)
+                {
+                    newRi[j] = i;
+                    firstInput = false;
+                    continue;
+                }
+                for (int k = j - 1; k >= 0; k--)
+                {
+                    if (Ri[k] == i)
+                    {
+                        if (compareForRi(data, j, k, Ri))
+                        {
+                            newRi[j] = newRi[k];
+                            break;
+                        }
+                    }
+                    if (k == 0)
+                    {
+                        newIndex++;
+                        newRi[j] = newIndex;
+                    }
+                }
+            }
+        }
+        firstInput = true;
+    }
+    return newRi;
+}
+
+bool compareForRi(Data * data, int i, int j, QVector<int> Ri)
+{
+    int size = data->inputs.size();
+    for (int k = 0; k < size; k++)
+    {
+        if (data->table[k][i].output != "" && data->table[k][j].output != "")
+        {
+            QString stateI = data->table[k][i].state;
+            QString stateJ = data->table[k][j].state;
+            if (Ri[data->states.indexOf(stateI)] != Ri[data->states.indexOf(stateJ)])
+                return false;
+        }
+    }
+    return true;
 }

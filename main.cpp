@@ -9,24 +9,31 @@ int main(int argc, char *argv[])
     try
     {
     Data * data = new Data;
-    parse(data, "file.txt");
+    parse(data, "bbsse.kiss2");
 
-    for (int i = 0; i < data->states.size(); i++)
+    Show(data);
+
+    QVector<int> Ri;
+    QVector<int> newRi;
+    GetR1(Ri, data);
+    int size = data->states.size();
+    for (int i = 0; i < size; i++)
     {
-        std::cout << data->states[i].toStdString() << " ";
+        std::cout << Ri[i] << " ";
     }
-    std::cout << "\n\n";
-    for (int i = 0; i < data->inputs.size(); i++)
+    std::cout << "\n";
+    newRi = GetRi(Ri, data);
+
+    while(newRi != Ri)
     {
-        std::cout << data->inputs[i].toStdString() << " ";
-        for (int j = 0; j < data->states.size(); j++)
+        Ri = newRi;
+        for (int i = 0; i < size; i++)
         {
-            std::cout << data->table[i][j].state.toStdString() << "/";
-            std::cout << data->table[i][j].output.toStdString() << " ";
+            std::cout << newRi[i] << " ";
         }
-        std::cout << "\n\n";
+        std::cout << "\n";
+        newRi = GetRi(Ri, data);
     }
-
 
 
     }
