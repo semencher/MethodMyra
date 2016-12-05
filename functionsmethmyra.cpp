@@ -495,19 +495,90 @@ void GetR1(QVector<int> & R1, Data * data)
 
     for (int i = 1; i < size; i++)
     {
-        for (int j = i - 1; j >= 0; j--)
+        bool change = false;
+        for (int k = 1; k <= index; k++)
         {
-            if (compareForR1(data, i, j))
+            for (int j = i - 1; j >= 0; j--)
             {
-                R1[i] = R1[j];
-                break;
-            }
-            else
-            {
+                if (R1[j] == k)
+                {
+                    if (!compareForR1(data, i, j))
+                    {
+                        break;
+                    }
+                }
                 if (j == 0)
                 {
-                    index++;
-                    R1[i] = index;
+                    change = true;
+                    R1[i] = k;
+                }
+            }
+
+        }
+        if (!change)
+        {
+            index++;
+            R1[i] = index;
+        }
+    }
+    FullDefine(R1, data);
+}
+
+void FullDefine(QVector<int> & R1, Data * data)
+{
+    int index = 0;
+    int size = data->states.size();
+    for (int i = 0; i < size; i++)
+    {
+        if (index < R1[i])
+        {
+            index = R1[i];
+        }
+    }
+    int sizeInput = data->inputs.size();
+    for (int i = 1; i <= index; i++)
+    {
+        for (int j = 0; j < sizeInput; j++)
+        {
+            QString state = "";
+            QString out = "";
+            for (int k = 0; k < size; k++)
+            {
+                if (R1[k] == i)
+                {
+                    if (data->table[j][k].state != "")
+                    {
+                        state = data->table[j][k].state;
+                        out = data->table[j][k].output;
+                        break;
+                    }
+                }
+            }
+            if (state == "")
+            {
+                state = data->states[0];
+                for (int v = 0; v < size; v++)
+                {
+                    for (int u = 0; u < sizeInput; u++)
+                    {
+                        if (data->table[u][v].output != "")
+                        {
+                            out = data->table[u][v].output;
+                            v = size;
+                            break;
+                        }
+                    }
+                }
+            }
+            for (int k = 0; k < size; k++)
+            {
+                if (R1[k] == i)
+                {
+                    if (data->table[j][k].state == "")
+                    {
+                        data->table[j][k].state = state;
+                        data->table[j][k].output = out;
+                    }
                 }
             }
         }
@@ -655,4 +726,121 @@ void DeleteDC(Data * data, const QString & beginState)
     delete []data->table;
     data->states = newData->states;
     data->table = newData->table;
+}
+
+void NewFSM(Data * data, QVector<int> Ri)
+{
+    Data * newData = new Data;
+
+    int sizeInput = data->inputs.size();
+    newData->inputs = data->inputs;
+
+    int index = 0;
+    int sizeState = Ri.size();
+    for (int i = 0; i < sizeState; i++)
+    {
+        if (index < Ri[i])
+            index = Ri[i];
+    }
+    for (int i = 1; i <= index; i++)
+    {
+        newData->states.push_back("St" + QString::number(i));
+    }
+    int sizeNewState = newData->states.size();
+    newData->table = new Element *[sizeInput];
+    for (int i = 0; i < sizeInput; i++)
+    {
+        newData->table[i] = new Element[sizeNewState];
+    }
+    for (int i = 0; i < sizeInput; i++)
+    {
+        for (int j = 0; j < sizeNewState; j++)
+        {
+            for (int k = 0; k < sizeState; k++)
+            {
+                if (Ri[k] == j+1)
+                {
+                    if (data->table[i][k].state != "")
+                    {
+                        newData->table[i][j].state = "St" + QString::number(Ri[data->states.indexOf(data->table[i][k].state)]);
+                    }
+                    if (data->table[i][k].output != "")
+                    {
+                        newData->table[i][j].output = data->table[i][k].output;
+                    }
+                }
+            }
+        }
+    }
+    data->inputs = newData->inputs;
+    data->states = newData->states;
+    for (int i = 0; i < sizeInput; i++)
+    {
+        delete []data->table[i];
+    }
+    delete data->table;
+    data->table = newData->table;
+}
+
+void out(Data * data, const QString & nameFile)
+{
+    std::ofstream file;
+    std::string nameFileStd = nameFile.toStdString();
+    file.open(nameFileStd, std::ios::out);
+
+    if (!file)
+    {
+        ErrorMethodMyra e;
+        e.SetMessage("Unable to open file!");
+        throw e;
+    }
+    int icount = 0;
+    int ocount = 0;
+    int pcount = 0;
+    int scount = 0;
+
+    icount = data->inputs[0].size();
+    scount = data->states.size();
+    int size = data->inputs.size();
+    int sizeState = data->states.size();
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < sizeState; j++)
+        {
+            if (data->table[i][j].output != "")
+            {
+                ocount = data->table[i][j].output.size();
+                i = size;
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < sizeState; j++)
+        {
+            if (data->table[i][j].output != "" && data->table[i][j].state != "")
+            {
+                pcount++;
+            }
+        }
+    }
+    file << ".i " << icount << "\n";
+    file << ".o " << ocount << "\n";
+    file << ".p " << pcount << "\n";
+    file << ".s " << scount << "\n";
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < sizeState; j++)
+        {
+            if (data->table[i][j].output != "" && data->table[i][j].state != "")
+            {
+                file << data->inputs[i].toStdString() << " " << data->states[j].toStdString() << " " <<
+                        data->table[i][j].state.toStdString() << " " << data->table[i][j].output.toStdString() <<
+                        "\n";
+            }
+        }
+    }
+    file << ".e";
+    file.close();
 }

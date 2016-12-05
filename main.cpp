@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     QVector<int> Ri;
     QVector<int> newRi;
     GetR1(Ri, data);
+    Show(data);
     int size = data->states.size();
     for (int i = 0; i < size; i++)
     {
@@ -37,6 +38,9 @@ int main(int argc, char *argv[])
         newRi = GetRi(Ri, data);
     }
 
+    NewFSM(data, Ri);
+    Show(data);
+    out(data, "fileOut.txt");
 
     }
     catch(ErrorMethodMyra e)

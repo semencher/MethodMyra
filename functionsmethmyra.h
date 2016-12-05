@@ -61,6 +61,10 @@ bool compareForRi(Data * data, int i, int j, QVector<int> Ri);
 
 void DeleteDC(Data * data, const QString & beginState);
 
-void out(Data * data);
+void out(Data * data, const QString & nameFile);
+
+void NewFSM(Data * data, QVector<int> Ri);
+
+void FullDefine(QVector<int> & R1, Data * data);
 
 #endif  // FUNCTIONSMETHMYRA_H
